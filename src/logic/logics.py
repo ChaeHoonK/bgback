@@ -1,7 +1,7 @@
 import math
 from psycopg2 import connect, Error
 
-from logic.logics import DBClient, Store
+from logic.logics import Client, Store
 
 from sql.type import Store
 

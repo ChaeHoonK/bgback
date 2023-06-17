@@ -14,7 +14,7 @@ class User:
 
 
 class Store:
-    def __init__(self, storeUID: int, phone: str, name: str, latitude: float, longitude: float, address: str, menus: List[(str,int)], URLs: List[str]):
+    def __init__(self, storeUID: int, phone: str, name: str, latitude: float, longitude: float, address: str, menus: List[tuple[str,int]], URLs: List[str]):
         self.storeUID = storeUID
         self.phone = phone
         self.name = name

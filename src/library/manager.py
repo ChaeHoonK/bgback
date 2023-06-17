@@ -1,4 +1,4 @@
-from sql.client import DBClient, UserClient, CouponClient
+from sql.client import Client, UserClient, CouponClient
 from sql.type import User
 
 class UserManager:
@@ -7,7 +7,7 @@ class UserManager:
         pass
 
     def __init__(self, userId):
-        self.dbclient = DBClient()
+        self.dbclient = Client()
         self.userClient = UserClient(self.dbclient)
         self.userClient.set_by_id(userId)
 
@@ -32,7 +32,7 @@ class CouponManager:
         pass
 
     def __init__(self, couponId):
-        self.dbclient = DBClient()
+        self.dbclient = Client()
         self.couponClient = CouponClient(self.dbclient)
         self.couponClient.set_by_id(couponId)
 

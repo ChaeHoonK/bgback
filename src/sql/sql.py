@@ -1,15 +1,15 @@
 '''CREATE TABLE Users (
-    userUID UUID PRIMARY KEY,
+    userUID SERIAL PRIMARY KEY,
     ID TEXT NOT NULL,
     PW TEXT NOT NULL,
-    StoreUID UUID,
+    StoreUID INT,
     PW2 TEXT,
     Phone TEXT,
     Wallet TEXT[]
 );'''
 
 '''CREATE TABLE Stores (
-    storeUID UUID PRIMARY KEY,
+    storeUID SERIAL PRIMARY KEY,
     Phone TEXT,
     Name TEXT NOT NULL,
     Latitude NUMERIC,
@@ -20,7 +20,7 @@
 );'''
 
 '''CREATE TABLE Items (
-    itemUID UUID PRIMARY KEY,
+    itemUID SERIAL PRIMARY KEY,
     Name TEXT,
     Category1 TEXT,
     Category2 TEXT,
@@ -29,7 +29,7 @@
 '''
 
 '''CREATE TABLE Transactions (
-    transactionUID UUID PRIMARY KEY,
+    transactionUID SERIAL PRIMARY KEY,
     Timestamp TIMESTAMP,
     couponUID UUID,
     clientID UUID,
