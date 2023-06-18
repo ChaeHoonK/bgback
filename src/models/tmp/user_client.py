@@ -1,35 +1,5 @@
-from models.table import Table
 from sql.client import Client
-
-class User(Table):
-    def __init__(self, user_uid, email, password, second_password=None, phone_number=None,
-                 second_phone_number=None, wallet_id=None, store_uids=None):
-        self.user_uid = user_uid
-        self.email = email
-        self.password = password
-        self.second_password = second_password
-        self.phone_number = phone_number
-        self.second_phone_number = second_phone_number
-        self.wallet_id = wallet_id
-        self.store_uids = store_uids or []
-
-
-    @classmethod
-    def _ensure_table_sql(cls) -> str:
-        return """
-CREATE TABLE IF NOT EXISTS users (
-    user_uid SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    second_password VARCHAR(255),
-    phone_number INTEGER,
-    second_phone_number INTEGER,
-    wallet_id INTEGER,
-    store_uids INTEGER[]
-);
-        """
-
-
+from models.user import User
 
 #models/user_client.py
 class UserClient:
@@ -37,7 +7,7 @@ class UserClient:
         self.db = client
         self.user = user
 
-    def create(self, *args):
+    def create(self, email, password,second_password, phone_number,second_phone_number,wallet_id,store_uids):
         try:
             query = """
             INSERT INTO Users (
@@ -45,12 +15,12 @@ class UserClient:
             ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING *;
             """
-            result = self.db.query(query, args)
+            result = self.db.query(query, (email, password, second_password, phone_number,second_phone_number,wallet_id,store_uids ))
             return User(*result)
         except Exception as e:
             print(f"An error occurred: {e}")
 
-    def read(self, userUID):
+    def get(self, userUID):
         try:
             query = "SELECT * FROM Users WHERE userUID = %s;"
             result = self.db.query(query, (userUID,))
@@ -61,7 +31,7 @@ class UserClient:
             print(f"An error occurred: {e}")
     
     def set_by_id(self, userUID):
-        self.user = self.read(userUID)
+        self.user = self.get(userUID)
 
     def set_user(self, user: User):
         self.user = user

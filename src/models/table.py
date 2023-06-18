@@ -1,4 +1,4 @@
-from sql.client import Client
+from sql.client import Client, ClientConnector
 
 
 class Table:
@@ -9,8 +9,5 @@ class Table:
     @classmethod
     def ensure_table(cls):
         print('initializing ' + str(cls.__name__))
-        client = Client()
-        client.cursor.execute(cls._ensure_table_sql())
-        client.connection.commit()
-        client.connection.close()
-        client.cursor.close()
+        with ClientConnector() as client:
+            client.execute(cls._ensure_table_sql())

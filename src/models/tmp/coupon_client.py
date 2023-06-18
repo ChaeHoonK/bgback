@@ -1,20 +1,22 @@
 # models/coupon_client.py
-from sql.client import Client as Client
+from sql.client import Client
 from models.coupon import Coupon
 
 class CouponClient:
-    def __init__(self):
-        self.db = Client()
+    def __init__(self, client: Client):
+        self.db = client
 
     def create_coupon(self, coupon: Coupon):
         query = """
             INSERT INTO coupons (
                 coupon_uid, user_1_uid, user_2_uid, item_list, published_time, expiration, comment
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s);
+            ) VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) RETURNING *;
         """
-        self.db.execute(query, (coupon.coupon_uid, coupon.user_1_uid, coupon.user_2_uid, 
+        result = self.db.query(query, (coupon.coupon_uid, coupon.user_1_uid, coupon.user_2_uid, 
                                 coupon.item_list, coupon.published_time, coupon.expiration, 
                                 coupon.comment))
+        if result:
+            return Coupon(*result)
 
     def get_coupon(self, coupon_uid):
         query = "SELECT * FROM coupons WHERE coupon_uid = %s;"

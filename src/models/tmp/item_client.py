@@ -2,16 +2,19 @@ from sql.client import Client
 from models.item import Item
 
 class ItemsClient:
-    def __init__(self):
-        self.db = Client()
+    def __init__(self, client: Client):
+        self.db = client
 
     def create_item(self, name, category_1, category_2, category_3):
         query = """
             INSERT INTO items (
                 item_uid, name, category_1, category_2, category_3
-            ) VALUES (DEFAULT, %s, %s, %s, %s);
+            ) VALUES (DEFAULT, %s, %s, %s, %s) RETURNING *;
         """
-        self.db.execute(query, (name, category_1, category_2, category_3))
+        result = self.db.query(query, (name, category_1, category_2, category_3))
+
+        if result:
+            return Item(*result)
 
     def get_item(self, item_uid):
         query = "SELECT * FROM items WHERE item_uid = %s;"

@@ -4,10 +4,10 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Optional
 from jose import jwt
 import datetime
-from sql.type import User
 import redis
 from sql.client import Client
 from models.user_client import UserClient
+from models import User
 
 SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"

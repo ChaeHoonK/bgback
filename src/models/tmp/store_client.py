@@ -2,17 +2,19 @@ from sql.client import Client
 from models.store import Store
 
 class StoreClient:
-    def __init__(self):
-        self.db = Client()
+    def __init__(self, client:Client):
+        self.db = client
 
     def create_store(self, store):
         query = """
             INSERT INTO stores (
                 store_uid, phone_number, name, latitude, longitude, address, menu_items, urls
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+            ) VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s) RETURNING *;
         """
-        self.db.execute(query, (store.store_uid, store.phone_number, store.name, store.latitude, 
+        result = self.db.query(query, (store.store_uid, store.phone_number, store.name, store.latitude, 
                                 store.longitude, store.address, store.menu_items, store.urls))
+        if result:
+            return Store(*result)
 
     def get_store(self, store_uid):
         query = "SELECT * FROM stores WHERE store_uid = %s;"

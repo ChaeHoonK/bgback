@@ -2,17 +2,19 @@ from sql.client import Client
 from models.auction_history import AuctionHistory
 
 class AuctionHistoryClient:
-    def __init__(self):
-        self.db = Client()
+    def __init__(self, client: Client):
+        self.db = client
 
     def create_auction_history(self, auction_history):
         query = """
             INSERT INTO auction_history (
                 auction_history_uid, publisher_id, published_time, closed_time, status
-            ) VALUES (%s, %s, %s, %s, %s);
+            ) VALUES (DEFAULT, %s, %s, %s, %s) RETURNING *;
         """
-        self.db.execute(query, (auction_history.auction_history_uid, auction_history.publisher_id,
+        result = self.db.query(query, (auction_history.auction_history_uid, auction_history.publisher_id,
                                 auction_history.published_time, auction_history.closed_time, auction_history.status))
+        if result:
+            return AuctionHistory(*result)
 
     def get_auction_history(self, auction_history_uid):
         query = "SELECT * FROM auction_history WHERE auction_history_uid = %s;"

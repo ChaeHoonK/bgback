@@ -2,16 +2,19 @@ from sql.client import Client
 from models.category import Category
 
 class CategoryClient:
-    def __init__(self):
-        self.db = Client()
+    def __init__(self,client: Client):
+        self.db = client
 
     def create_category(self, name):
         query = """
             INSERT INTO categories (
                 DEFAULT, name
-            ) VALUES (%s);
+            ) VALUES (%s) RETURNING *;
         """
-        self.db.execute(query, (name))
+        result = self.db.query(query, (name))
+
+        if result:
+            return Category(*result)
 
     def get_category(self, category_uid):
         query = "SELECT * FROM categories WHERE category_uid = %s;"

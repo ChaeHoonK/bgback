@@ -1,65 +1,18 @@
-# models/request.py
-from models.table import Table
-from states.request_state import NewState, RequestState
-from kafka import KafkaProducer
-import json
 from sql.client import Client
-
-class Request(Table):
-    def __init__(self, request_uid, auction_uid, receiver_user_uid, receiver_item_list=None, receiver_price_list=None,
-                 sender_user_uid=None, sender_item_list=None,sender_price_list=None, status=None):
-        self.request_uid = request_uid
-        self.auction_uid = auction_uid
-        self.receiver_user_uid = receiver_user_uid
-        self.receiver_item_list = receiver_item_list or []
-        self.receiver_price_list = receiver_price_list or []
-        
-        self.sender_user_uid = sender_user_uid
-        self.sender_item_list = sender_item_list or []
-        self.sender_price_list = sender_price_list or []
-        self.status = status
-        self.state = NewState()
-
-    def set_state(self, state: RequestState):
-        self.state = state
-
-    def process(self):
-        self.state.process_request(self)
-
-    def notify_observers(self):
-        producer = KafkaProducer(bootstrap_servers='localhost:9092', 
-                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-        producer.send('request-updates', {'request_id': self.request_uid, 'state': self.state.name})
-        producer.flush()
-
-    @classmethod
-    def _ensure_table_sql(cls) -> str:
-        return """
-CREATE TABLE IF NOT EXISTS requests (
-    request_uid SERIAL PRIMARY KEY,
-    auction_uid INTERGER REFERENCES auctions(auction_uid),
-    receiver_user_uid INTEGER REFERENCES users(user_uid),
-    receiver_item_list INTEGER[],
-    sender_user_uid INTEGER REFERENCES users(user_uid),
-    sender_item_list INTEGER[],
-    status INTEGER
-);
-        """
-
-
-
+from models.request import Request
 
 class RequestClient:
     def __init__(self, client: Client):
         self.db = client
 
-    def create_request(self, *args):
+    def create_request(self, auction_uid, receiver_user_uid, receiver_item_list,receiver_price_list,sender_user_uid,sender_item_list, sender_price_list,status=0):
         query = """
             INSERT INTO requests (
                 request_uid, auction_uid, receiver_user_uid, receiver_item_list, receiver_price_list, sender_user_uid, sender_item_list, sender_price_list, status
-            ) VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s, 0) RETURNING *;
+            ) VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *;
         """
-        result = self.db.query(query, args, fetch_one=True)
+        result = self.db.query(query, (auction_uid, receiver_user_uid, receiver_item_list, receiver_price_list,
+                                sender_user_uid, sender_item_list,sender_price_list, status), fetch_one=True)
         
         if result:
             return Request(*result)
