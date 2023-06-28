@@ -1,15 +1,18 @@
 # models/coupon.py
-from models.table import Table
+from models.table import Table, BaseClient
 import datetime
 from sql.client import Client
 
 class Coupon(Table):
-    def __init__(self, coupon_uid, user_1_uid, user_2_uid, item_list=None, published_time=None, 
+    def __init__(self, coupon_uid, coupon_type,store_uid ,provider_uid, consumer_uid, item_list=None, price_list=None, published_time=None, 
                  expiration=None, comment=None):
         self.coupon_uid = coupon_uid
-        self.user_1_uid = user_1_uid
-        self.user_2_uid = user_2_uid
+        self.coupon_type = coupon_type
+        self.store_uid = store_uid
+        self.provider_uid = provider_uid
+        self.consumer_uid = consumer_uid
         self.item_list = item_list or []
+        self.price_list = price_list or []
         self.published_time = published_time
         self.expiration = expiration
         self.comment = comment
@@ -19,9 +22,12 @@ class Coupon(Table):
         return """
 CREATE TABLE IF NOT EXISTS coupons (
     coupon_uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_1_uid INTEGER REFERENCES users(user_uid),
-    user_2_uid INTEGER REFERENCES users(user_uid),
+    coupon_type INTEGER,
+    store_uid INTEGER REFERENCES stores(store_uid),
+    provider_uid INTEGER REFERENCES users(user_uid),
+    consumer_uid INTEGER REFERENCES users(user_uid),
     item_list INTEGER[],
+    price_list INTEGER[],
     published_time TIMESTAMP,
     expiration TIMESTAMP,
     comment TEXT
@@ -29,38 +35,48 @@ CREATE TABLE IF NOT EXISTS coupons (
         """
 
 
-class CouponClient:
+class CouponClient(BaseClient):
     def __init__(self, client: Client):
         self.db = client
 
-    def create_coupon(self, *args):
+    def create(self, *args):
         query = """
             INSERT INTO coupons (
-                coupon_uid, user_1_uid, user_2_uid, item_list, published_time, expiration, comment
-            ) VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) RETURNING *;
+                coupon_uid, coupon_type, store_uid, provider_uid, consumer_uid, item_list,price_list, published_time, expiration, comment
+            ) VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *;
         """
         result = self.db.query(query, args)
         if result:
             return Coupon(*result)
 
-    def get_coupon(self, coupon_uid):
+    def get(self, coupon_uid):
         query = "SELECT * FROM coupons WHERE coupon_uid = %s;"
         result = self.db.execute(query, (coupon_uid,), fetch_one=True)
         if result:
             return Coupon(*result)
         return None
 
-    def update_coupon(self, coupon: Coupon):
+    def update(self, coupon: Coupon):
         query = """
             UPDATE coupons SET 
-                user_1_uid = %s, user_2_uid = %s, item_list = %s, published_time = %s, 
+                store_uid=%s, provider_uid = %s, consumer_uid = %s, item_list = %s, published_time = %s, 
                 expiration = %s, comment = %s
             WHERE coupon_uid = %s;
         """
-        self.db.execute(query, (coupon.user_1_uid, coupon.user_2_uid, coupon.item_list, 
+        self.db.execute(query, (coupon.store_uid, coupon.provider_uid, coupon.consumer_uid, coupon.item_list, 
                                 coupon.published_time, coupon.expiration, 
                                 coupon.comment, coupon.coupon_uid))
 
-    def delete_coupon(self, coupon_uid):
+
+    def update_price(self, coupon_uid, price):
+        query = """
+            UPDATE coupons SET 
+                price_list = %s
+            WHERE coupon_uid = %s;
+        """
+        self.db.execute(query, ([price], coupon_uid))
+
+
+    def delete(self, coupon_uid):
         query = "DELETE FROM coupons WHERE coupon_uid = %s;"
         self.db.execute(query, (coupon_uid,))

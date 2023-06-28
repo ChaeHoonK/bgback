@@ -2,7 +2,8 @@
 from models.auction import Auction, AuctionClient
 from models.request import Request, RequestClient
 from sql.client import ClientConnector
-from models.coupon import Coupon, CouponClient
+from facade.coupon_facade import CouponFacade
+
 
 
 class AuctionFacade:
@@ -13,13 +14,13 @@ class AuctionFacade:
         tmp = tuple(kwargs.values())
         with ClientConnector() as client:
             auction_client = AuctionClient(client)
-            return auction_client.create_auction(*tmp)
+            return auction_client.create(*tmp)
 
     def create_request(self, **kwargs):
         tmp = tuple(kwargs.values())
         with ClientConnector() as client:
             request_client = RequestClient(client)
-            return request_client.create_request(*tmp)    
+            return request_client.create(*tmp)    
         
 
     def process_request(self, **kwargs ):
@@ -28,13 +29,18 @@ class AuctionFacade:
         with ClientConnector() as client:
             request_client = RequestClient(client)
             auction_client = AuctionClient(client)
-            if kwargs['status'] == 0:
-                request = Request(kwargs)
-            else:                
-                request = auction_client.get_auction()
-                self._finalize_auction(request)
+            request = request_client.get(kwargs['request_uid'])
+            if kwargs['status'] == 1:
+                request_reversed = Request(kwargs)
+                request_reversed.reverse()
+                request_client.create(request_reversed.before_creation())
 
-            request_client.update_request(request)
+            else:                
+                self._finalize_auction(request)
+                auction_client.delete(kwargs['auction_uid'])
+
+            request_client.update_request_status(request['request_uid'], kwargs['status'])
+            
 
         #notify receiver kwargs["re"]
 
@@ -46,7 +52,7 @@ class AuctionFacade:
 
 
     def _create_coupon(self, request: Request):
-        pass
+        return CouponFacade().create_coupon(request)
 
 
     def _finalize_transaction(self, request: Request):
@@ -71,6 +77,6 @@ class AuctionFacade:
             # e.g., delete the auction, update the items of the users, etc.
             # the details of the transaction finalization are omitted for brevity
 
-            auction = auction_client.get_auction(request.auction_uid)
+            auction = auction_client.get(request.auction_uid)
             if auction:
-                auction_client.delete_auction(auction.auction_uid)
+                auction_client.delete(auction.auction_uid)

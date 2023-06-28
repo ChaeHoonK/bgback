@@ -1,15 +1,15 @@
 # models/transaction.py
-from models.table import Table
+from models.table import Table, BaseClient
 from sql.client import Client
 import datetime
 
 class Transaction(Table):
-    def __init__(self, transaction_uid, timestamp, coupon_uid, client_id, host_id):
+    def __init__(self, transaction_uid, timestamp, coupon_uid, consumer_uid, amount):
         self.transaction_uid = transaction_uid
         self.timestamp = timestamp
         self.coupon_uid = coupon_uid
-        self.client_id = client_id
-        self.host_id = host_id
+        self.consumer_uid = consumer_uid
+        self.amount = amount
 
     @classmethod
     def _ensure_table_sql(cls) -> str:
@@ -18,24 +18,27 @@ CREATE TABLE IF NOT EXISTS transactions (
     transaction_uid SERIAL PRIMARY KEY,
     timestamp TIMESTAMP,
     coupon_uid INTEGER,
-    client_id INTEGER REFERENCES users(user_uid),
-    host_id INTEGER REFERENCES users(user_uid)
+    consumer_uid INTEGER REFERENCES users(user_uid),
+    amount INTEGER
 );
         """
 
 
 
-class TransactionClient:
+class TransactionClient(BaseClient):
     def __init__(self, client: Client):
         self.db = client
 
     def create(self, *args):
         query = """
             INSERT INTO transactions (
-                transaction_uid, timestamp, coupon_uid, client_id, host_id
+                transaction_uid, timestamp, coupon_uid, consumer_uid, amount
             ) VALUES (DEFAULT, %s, %s, %s, %s) RETURNING *;
         """
         result = self.db.query(query, args)
+
+        if result:
+            return Transaction(*result)
 
     def get(self, transaction_uid):
         query = "SELECT * FROM transactions WHERE transaction_uid = %s;"

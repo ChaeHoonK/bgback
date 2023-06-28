@@ -1,4 +1,4 @@
-from models.table import Table
+from models.table import Table, BaseClient
 from sql.client import Client
 
 class Wallet(Table):
@@ -24,11 +24,11 @@ CREATE TABLE IF NOT EXISTS wallets (
 
 
 
-class WalletClient:
+class WalletClient(BaseClient):
     def __init__(self):
         self.db = Client()
 
-    def create_wallet(self, *args):
+    def create(self, *args):
         query = """
             INSERT INTO wallets (
                 wallet_uid, owner, ordinary_coupons, discount_coupons, point_coupons
@@ -36,14 +36,14 @@ class WalletClient:
         """
         self.db.execute(query, args)
 
-    def get_wallet(self, wallet_uid):
+    def get(self, wallet_uid):
         query = "SELECT * FROM wallets WHERE wallet_uid = %s;"
         result = self.db.execute(query, (wallet_uid,), fetch_one=True)
         if result:
             return Wallet(*result)
         return None
 
-    def update_wallet(self, wallet):
+    def update(self, wallet):
         query = """
             UPDATE wallets SET 
                 owner = %s, ordinary_coupons = %s, discount_coupons = %s, point_coupons = %s
@@ -52,6 +52,6 @@ class WalletClient:
         self.db.execute(query, (wallet.owner, wallet.ordinary_coupons, wallet.discount_coupons,
                                 wallet.point_coupons, wallet.wallet_uid))
 
-    def delete_wallet(self, wallet_uid):
+    def delete(self, wallet_uid):
         query = "DELETE FROM wallets WHERE wallet_uid = %s;"
         self.db.execute(query, (wallet_uid,))

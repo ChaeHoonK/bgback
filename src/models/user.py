@@ -1,4 +1,4 @@
-from models.table import Table
+from models.table import Table, BaseClient
 from sql.client import Client
 
 class User(Table):
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 
 #models/user_client.py
-class UserClient:
+class UserClient(BaseClient):
     def __init__(self, client:Client, user:User=None):
         self.db = client
         self.user = user
@@ -50,7 +50,7 @@ class UserClient:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-    def read(self, userUID):
+    def get(self, userUID):
         try:
             query = "SELECT * FROM Users WHERE userUID = %s;"
             result = self.db.query(query, (userUID,))
@@ -66,22 +66,22 @@ class UserClient:
     def set_user(self, user: User):
         self.user = user
 
-    def update(self, userUID, ID, PW, second_PW, storeUID, phone, wallet):
+    def update(self, *args):
         try:
             query = """
             UPDATE Users SET 
-                ID = %s, PW = %s, second_PW = %s, storeUID = %s, phone = %s, wallet = %s
+                email = %s, password = %s, second_password = %s, phone_number = %s, second_phone_number=%s, wallet_id = %s, store_uids = %s
             WHERE userUID = %s;
             """
-            self.db.execute(query, (ID, PW, second_PW, storeUID, phone, wallet, userUID))
+            self.db.execute(query, args)
             self.db.commit()
         except Exception as e:
             print(f"An error occurred: {e}")
 
-    def delete(self, userUID):
+    def delete(self, user_uid):
         try:
             query = "DELETE FROM Users WHERE userUID = %s;"
-            self.db.execute(query, (userUID,))
+            self.db.execute(query, (user_uid,))
             self.db.commit()
         except Exception as e:
             print(f"An error occurred: {e}")

@@ -1,4 +1,4 @@
-from models.table import Table
+from models.table import Table, BaseClient
 from sql.client import Client
 
 class Category(Table):
@@ -9,7 +9,7 @@ class Category(Table):
     @classmethod
     def _ensure_table_sql(cls) -> str:
         return """
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE IF NOT EXISTS categories_m (
     category_uid SERIAL PRIMARY KEY,
     name VARCHAR(255)
 );
@@ -18,13 +18,13 @@ CREATE TABLE IF NOT EXISTS categories (
 
 
 
-class CategoryClient:
+class CategoryClient(BaseClient):
     def __init__(self,client: Client):
         self.db = client
 
-    def create_category(self, *args):
+    def create(self, *args):
         query = """
-            INSERT INTO categories (
+            INSERT INTO categories_m (
                 DEFAULT, name
             ) VALUES (%s) RETURNING *;
         """
@@ -33,21 +33,21 @@ class CategoryClient:
         if result:
             return Category(*result)
 
-    def get_category(self, category_uid):
-        query = "SELECT * FROM categories WHERE category_uid = %s;"
+    def get(self, category_uid):
+        query = "SELECT * FROM categories_m WHERE category_uid = %s;"
         result = self.db.execute(query, (category_uid,), fetch_one=True)
         if result:
             return Category(*result)
         return None
 
-    def update_category(self, category):
+    def update(self, category: Category):
         query = """
-            UPDATE categories SET 
+            UPDATE categories_m SET 
                 name = %s
             WHERE category_uid = %s;
         """
         self.db.execute(query, (category.name, category.category_uid))
 
-    def delete_category(self, category_uid):
-        query = "DELETE FROM categories WHERE category_uid = %s;"
+    def delete(self, category_uid):
+        query = "DELETE FROM categories_m WHERE category_uid = %s;"
         self.db.execute(query, (category_uid,))

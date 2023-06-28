@@ -1,5 +1,5 @@
 from sql.client import Client
-from models.category import Category
+from models.category_l import Category
 
 class CategoryClient:
     def __init__(self,client: Client):

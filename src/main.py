@@ -7,7 +7,6 @@ from typing import Optional
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
-from logic.usermanager import UserManager
 
 from models import init_all
 from library.jwt import create_access_token
